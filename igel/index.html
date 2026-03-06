@@ -22,6 +22,7 @@
             text-align: center;
             gap: 50px;
             color: #0A0A0A;
+            background-color: #fff;
         }
 
         .print-label {
@@ -31,23 +32,45 @@
             font-family: inherit; /* Ensures it uses the body font */
         }
 
-        .name-input {
-            font-family: inherit; /* Ensures it uses the body font */
-            font-size: 80px;
-            font-weight: bold;
-            border: none;
-            outline: none;
-            text-align: center;
+        .input-wrapper {
+            position: relative;
             width: 100%;
-            background: transparent;
-            color: #0A0A0A;
-            resize: none;
-            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        .name-input::placeholder {
-            color: #999;
-            font-weight: normal;
+        .name-input {
+            font-family: inherit;
+            font-size: 80px;
+            line-height: 1.2;
+            font-weight: bold;
+            color: #0A0A0A;
+            width: 100%;
+            min-height: 120px;
+            outline: none;
+            border: none;
+            border-bottom: 2px solid #ddd;
+            text-align: center;
+            white-space: pre-wrap;
+            word-break: break-word;
+            caret-color: transparent; 
+            max-height: 190px;
+            overflow:hidden;
+        }
+
+        #custom-caret {
+            position: absolute;
+            width: 5px;          /* Custom thickness */
+            height: 80px;       /* Match your font-size */
+            display: none;       /* Hidden until focused */
+            pointer-events: none; /* User can click "through" it */
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            from, to { background-color: transparent; }
+            50% { background-color: #999; }
         }
 
         .logo-container {
@@ -88,13 +111,13 @@
                 display: block;
             }
             .name-input {
-                color: #bbb;
-            }
-            .name-input::placeholder {
-                color: transparent;
+                border-bottom: none;
             }
             .no-print {
                 display: none;
+            }
+            #custom-caret {
+                display: none !important;
             }
         }
     </style>
@@ -103,13 +126,12 @@
     <div class="print-label only-print">This document was printed by:</div>
     
     
-    <textarea class="name-input" rows="2" placeholder="Click Here to
-Enter Your Name" autocomplete="off"
-    autocorrect="off"
-    autocapitalize="off"
-    spellcheck="false"></textarea>
+    <div class="input-wrapper">
+        <div class="name-input" contenteditable="true" spellcheck="false"></div>
+        <div id="custom-caret"></div>
+    </div>
 
-    <div class="no-print">then print this page (CTRL + P)<br>You can pick it up from the printer<br>at the Vasion booth (661)</div>
+    <div class="no-print">Enter Your Name<br>then print this page (CTRL + P)<br>You can pick it up from the printer<br>at the Vasion booth (661)</div>
 
     <div class="logo-container only-print">
         <svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 612 324.1">
@@ -129,26 +151,82 @@ Enter Your Name" autocomplete="off"
     </div>
 
     <script>
-  const textarea = document.querySelector('.name-input');
-  const MAX_ROWS = 2;
+        const input = document.querySelector('.name-input');
+        const caret = document.getElementById('custom-caret');
 
-  textarea.addEventListener('input', function() {
-    // Split the text by newlines
-    let lines = this.value.split('\n');
-    
-    // If there are more than 2 lines, remove the extra ones
-    if (lines.length > MAX_ROWS) {
-      this.value = lines.slice(0, MAX_ROWS).join('\n');
-    }
-  });
+        function updateCaret() {
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
 
-  // Prevent "Enter" key if already at 2 lines
-  textarea.addEventListener('keydown', function(e) {
-    let lines = this.value.split('\n');
-    if (e.key === "Enter" && lines.length >= MAX_ROWS) {
-      e.preventDefault();
-    }
-  });
-</script>
+            const range = selection.getRangeAt(0).cloneRange();
+            
+            // Create a temporary span (our "probe") at the cursor position
+            const dummy = document.createElement("span");
+            dummy.innerHTML = "\u200b"; // Zero-width space
+            range.insertNode(dummy);
+            
+            const rect = dummy.getBoundingClientRect();
+            const wrapperRect = input.parentElement.getBoundingClientRect();
+
+            if (rect.height > 0) {
+                caret.style.display = 'block';
+                // Use horizontal centering logic if the input is empty
+                if (input.innerText.trim() === "" && input.innerText.length === 0) {
+                    caret.style.left = "50%";
+                    caret.style.transform = "translateX(-50%)";
+                } else {
+                    caret.style.left = (rect.left - wrapperRect.left) + 'px';
+                    caret.style.transform = "none";
+                }
+                
+                caret.style.top = (rect.top - wrapperRect.top) + 'px';
+                caret.style.height = rect.height + 'px';
+            }
+
+            // Remove the probe so it doesn't mess up the actual text
+            dummy.parentNode.removeChild(dummy);
+        }
+
+        // Limit to 2 lines
+        input.addEventListener('keydown', (e) => {
+            if (e.key === "Enter") {
+                const lines = input.innerText.split('\n');
+                if (lines.length >= 2) {
+                    e.preventDefault();
+                }
+            }
+        });
+
+        // Event listeners
+        ['input', 'click', 'keyup', 'keydown', 'focus'].forEach(event => {
+            input.addEventListener(event, () => {
+                // Tiny delay to allow the browser to update the selection
+                setTimeout(updateCaret, 0);
+            });
+        });
+
+        // Force focus
+        window.onload = () => {
+            input.focus();
+            updateCaret();
+        };
+
+        document.addEventListener('click', (e) => {
+            if (e.target !== input) {
+                input.focus();
+                // Move cursor to end
+                const range = document.createRange();
+                const sel = window.getSelection();
+                range.selectNodeContents(input);
+                range.collapse(false);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        });
+
+        input.addEventListener('blur', () => {
+            setTimeout(() => input.focus(), 0);
+        });
+    </script>
 </body>
 </html>
