@@ -24,9 +24,6 @@
 
         svg { width: 100%; height: 100%; }
         .st0 { fill: #000 !important; }
-
-        /* --- PRINT ONLY ELEMENTS --- */
-        .only-print { display: none !important; }
         
         .print-label { font-size: 65px; font-weight: bold; margin-top: 0.5in; }
         
@@ -56,15 +53,16 @@
             font-weight: bold;
             color: #000;
             width: 100%;
-            min-height: 120px;
+            min-height: 86px;
             outline: none;
             border: none;
             border-bottom: 2px solid #ddd;
             text-align: center;
-            white-space: pre-wrap;
-            word-break: break-word;
             caret-color: transparent; 
             text-transform: uppercase;
+            overflow:hidden;
+            max-height: 159px;
+            white-space: pre-line;
         }
 
         #custom-caret {
@@ -116,6 +114,7 @@
         }
 
         .hidden { display: none !important; }
+        .only-print { display: none !important; }
 
         /* --- PRINT MEDIA QUERIES --- */
         @media print {
@@ -175,30 +174,61 @@
 
         let isPrintMode = false;
 
+        // 1. BLOCK EXTRA LINES (Enter Key)
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                // Count existing lines by splitting on newlines
+                const lines = input.innerText.split(/\r?\n/);
+                
+                // If we already have 2 lines, block any further "Enters"
+                if (lines.length >= 2) {
+                    e.preventDefault();
+                }
+            }
+        });
+
+        // 2. BLOCK MULTI-LINE PASTING
+        input.addEventListener('paste', (e) => {
+            e.preventDefault();
+            // Get text from clipboard and strip out extra newlines
+            const text = (e.originalEvent || e).clipboardData.getData('text/plain');
+            const cleanText = text.replace(/\n/g, " ");
+            document.execCommand("insertHTML", false, cleanText);
+        });
+
+        // 3. UI STATE MANAGEMENT (Toggle visibility of instructions)
         function updateUI() {
+            // If we just printed, don't let the UI reset while showing the success message
             if (isPrintMode) return;
+
             const hasContent = /\S/.test(input.textContent);
             if (hasContent) {
                 enterNameLabel.classList.add('hidden');
                 instructions.classList.remove('hidden');
+                successMsg.style.display = 'none';
             } else {
                 enterNameLabel.classList.remove('hidden');
                 instructions.classList.add('hidden');
+                successMsg.style.display = 'none';
             }
         }
 
+        // 4. CUSTOM CARET POSITIONING
         function updateCaret() {
             const selection = window.getSelection();
-            if (!selection.rangeCount) return;
+            if (!selection || !selection.rangeCount) return;
+            
             const range = selection.getRangeAt(0).cloneRange();
             const dummy = document.createElement("span");
-            dummy.innerHTML = "\u200b";
+            dummy.innerHTML = "\u200b"; // Zero-width space
             range.insertNode(dummy);
+            
             const rect = dummy.getBoundingClientRect();
             const wrapperRect = input.parentElement.getBoundingClientRect();
 
             if (rect.height > 0) {
                 caret.style.display = 'block';
+                // Center caret if empty, follow text if not
                 if (input.innerText.trim() === "" && input.innerText.length === 0) {
                     caret.style.left = "50%";
                     caret.style.transform = "translateX(-50%)";
@@ -212,7 +242,8 @@
             dummy.parentNode.removeChild(dummy);
         }
 
-        ['input', 'click', 'keyup', 'keydown', 'focus'].forEach(event => {
+        // 5. EVENT LISTENERS FOR INPUT
+        ['input', 'click', 'keyup', 'focus'].forEach(event => {
             input.addEventListener(event, () => {
                 setTimeout(() => {
                     updateCaret();
@@ -221,12 +252,14 @@
             });
         });
 
+        // 6. POST-PRINT SUCCESS & RESET LOGIC
         window.addEventListener('afterprint', () => {
             isPrintMode = true; 
             instructions.classList.add('hidden');
             enterNameLabel.classList.add('hidden');
             successMsg.style.display = 'block';
 
+            // Auto-Reset after 8 seconds
             setTimeout(() => {
                 isPrintMode = false;
                 input.innerText = ""; 
@@ -237,17 +270,24 @@
             }, 8000);
         });
 
-        window.onload = () => { input.focus(); updateCaret(); };
+        // 7. INITIALIZATION & FOCUS RETENTION
+        window.onload = () => { 
+            input.focus(); 
+            updateCaret(); 
+        };
 
+        // Keep the input focused even if the user clicks the background
         document.addEventListener('click', (e) => {
             if (e.target !== input && e.target.id !== 'print-btn') {
                 input.focus();
                 const range = document.createRange();
                 const sel = window.getSelection();
-                range.selectNodeContents(input);
-                range.collapse(false);
-                sel.removeAllRanges();
-                sel.addRange(range);
+                if (sel) {
+                    range.selectNodeContents(input);
+                    range.collapse(false);
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }
             }
         });
     </script>
