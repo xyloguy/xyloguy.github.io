@@ -104,7 +104,10 @@
     
     
     <textarea class="name-input" rows="2" placeholder="Click Here to
-Enter Your Name"></textarea>
+Enter Your Name" autocomplete="off"
+    autocorrect="off"
+    autocapitalize="off"
+    spellcheck="false"></textarea>
 
     <div class="no-print">then print this page (CTRL + P)</div>
 
@@ -124,5 +127,28 @@ Enter Your Name"></textarea>
             <path class="st0" d="M294.95,227.51v-25.2h-22.88v-11.99h22.88v-25.33h11.87v25.33h23v11.99h-23v25.2h-11.87Z"/>
         </svg>
     </div>
+
+    <script>
+  const textarea = document.querySelector('.name-input');
+  const MAX_ROWS = 2;
+
+  textarea.addEventListener('input', function() {
+    // Split the text by newlines
+    let lines = this.value.split('\n');
+    
+    // If there are more than 2 lines, remove the extra ones
+    if (lines.length > MAX_ROWS) {
+      this.value = lines.slice(0, MAX_ROWS).join('\n');
+    }
+  });
+
+  // Prevent "Enter" key if already at 2 lines
+  textarea.addEventListener('keydown', function(e) {
+    let lines = this.value.split('\n');
+    if (e.key === "Enter" && lines.length >= MAX_ROWS) {
+      e.preventDefault();
+    }
+  });
+</script>
 </body>
 </html>
