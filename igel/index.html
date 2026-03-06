@@ -4,13 +4,9 @@
     <meta charset="UTF-8">
     <title>Printed from IGEL</title>
     <style>
-        @page {
-            size: 8.5in 11in;
-            margin: 0;
-        }
+        @page { size: 8.5in 11in; margin: 0; }
 
         body {
-            /* Applied font stack here */
             font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
             margin: 0 auto;
             padding: 1in;
@@ -21,58 +17,19 @@
             align-items: center;
             text-align: center;
             gap: 50px;
-            color: #0A0A0A;
+            color: #000;
             background-color: #fff;
+            overflow: hidden;
         }
 
-        .print-label {
-            font-size: 65px;
-            font-weight: bold;
-            margin-top: 0.5in;
-            font-family: inherit; /* Ensures it uses the body font */
-        }
+        svg { width: 100%; height: 100%; }
+        .st0 { fill: #000 !important; }
 
-        .input-wrapper {
-            position: relative;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .name-input {
-            font-family: inherit;
-            font-size: 80px;
-            line-height: 1.2;
-            font-weight: bold;
-            color: #0A0A0A;
-            width: 100%;
-            min-height: 120px;
-            outline: none;
-            border: none;
-            border-bottom: 2px solid #ddd;
-            text-align: center;
-            white-space: pre-wrap;
-            word-break: break-word;
-            caret-color: transparent; 
-            max-height: 190px;
-            overflow:hidden;
-        }
-
-        #custom-caret {
-            position: absolute;
-            width: 5px;          /* Custom thickness */
-            height: 80px;       /* Match your font-size */
-            display: none;       /* Hidden until focused */
-            pointer-events: none; /* User can click "through" it */
-            animation: blink 1s step-end infinite;
-        }
-
-        @keyframes blink {
-            from, to { background-color: transparent; }
-            50% { background-color: #999; }
-        }
-
+        /* --- PRINT ONLY ELEMENTS --- */
+        .only-print { display: none !important; }
+        
+        .print-label { font-size: 65px; font-weight: bold; margin-top: 0.5in; }
+        
         .logo-container {
             width: 100%;
             max-width: 6in; 
@@ -83,55 +40,114 @@
             margin-top: 50px;
         }
 
-        svg {
+        /* --- SHARED ELEMENTS --- */
+        .input-wrapper {
+            position: relative;
             width: 100%;
-            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        /* This ensures your Illustrator paths are visible and black */
-        .st0 {
-            fill: #0A0A0A !important;
+        .name-input {
+            font-family: inherit;
+            font-size: 72px;
+            line-height: 1.2;
+            font-weight: bold;
+            color: #000;
+            width: 100%;
+            min-height: 120px;
+            outline: none;
+            border: none;
+            border-bottom: 2px solid #ddd;
+            text-align: center;
+            white-space: pre-wrap;
+            word-break: break-word;
+            caret-color: transparent; 
+            text-transform: uppercase;
         }
 
-        .only-print{
+        #custom-caret {
+            position: absolute;
+            width: 5px;
+            height: 72px;
             display: none;
+            pointer-events: none;
+            animation: blink 1s step-end infinite;
         }
 
+        @keyframes blink {
+            from, to { background-color: transparent; }
+            50% { background-color: #999; }
+        }
+
+        /* --- SCREEN ONLY UI --- */
         .no-print {
             font-size: 32px;
             font-weight: bold;
-            margin-top: 0;
-            font-family: inherit; /* Ensures it uses the body font */
-            display: block;
-            color:#999;
+            color: #999;
+            width: 100%;
         }
 
+        #print-btn {
+            margin-top: 20px;
+            padding: 18px 45px;
+            font-size: 32px;
+            font-weight: bold;
+            background-color: #000;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        #print-success {
+            display: none; 
+            color: #28a745;
+            font-size: 42px;
+            line-height: 1.4;
+        }
+
+        .hidden { display: none !important; }
+
+        /* --- PRINT MEDIA QUERIES --- */
         @media print {
-            .only-print{
-                display: block;
-            }
-            .name-input {
-                border-bottom: none;
-            }
-            .no-print {
-                display: none;
-            }
-            #custom-caret {
-                display: none !important;
-            }
+            .only-print { display: block !important; }
+            .no-print, #custom-caret { display: none !important; }
+            .name-input { border-bottom: none !important; }
+            body { padding: 1in; gap: 50px; }
         }
     </style>
 </head>
 <body>
     <div class="print-label only-print">This document was printed by:</div>
     
-    
     <div class="input-wrapper">
         <div class="name-input" contenteditable="true" spellcheck="false"></div>
         <div id="custom-caret"></div>
     </div>
 
-    <div class="no-print">Enter Your Name<br>then print this page (CTRL + P)<br>You can pick it up from the printer<br>at the Vasion booth (661)</div>
+    <div class="no-print">
+        <div id="enter-name">Enter Your Name</div>
+        
+        <div id="instruction-container" class="hidden">
+            <div>then click the button below</div>
+            <button id="print-btn" onclick="window.print()">PRINT NOW</button>
+            <div style="font-size: 20px; margin-top: 15px; opacity: 0.6;">(or press CTRL + P)</div>
+        </div>
+
+        <div id="print-success">
+            Sent to printer! 🖨️<br>
+            <span style="font-size: 24px; color: #666;">Pick it up at the Vasion booth #661</span>
+        </div>
+    </div>
 
     <div class="logo-container only-print">
         <svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 612 324.1">
@@ -153,24 +169,36 @@
     <script>
         const input = document.querySelector('.name-input');
         const caret = document.getElementById('custom-caret');
+        const enterNameLabel = document.getElementById('enter-name');
+        const instructions = document.getElementById('instruction-container');
+        const successMsg = document.getElementById('print-success');
+
+        let isPrintMode = false;
+
+        function updateUI() {
+            if (isPrintMode) return;
+            const hasContent = /\S/.test(input.textContent);
+            if (hasContent) {
+                enterNameLabel.classList.add('hidden');
+                instructions.classList.remove('hidden');
+            } else {
+                enterNameLabel.classList.remove('hidden');
+                instructions.classList.add('hidden');
+            }
+        }
 
         function updateCaret() {
             const selection = window.getSelection();
             if (!selection.rangeCount) return;
-
             const range = selection.getRangeAt(0).cloneRange();
-            
-            // Create a temporary span (our "probe") at the cursor position
             const dummy = document.createElement("span");
-            dummy.innerHTML = "\u200b"; // Zero-width space
+            dummy.innerHTML = "\u200b";
             range.insertNode(dummy);
-            
             const rect = dummy.getBoundingClientRect();
             const wrapperRect = input.parentElement.getBoundingClientRect();
 
             if (rect.height > 0) {
                 caret.style.display = 'block';
-                // Use horizontal centering logic if the input is empty
                 if (input.innerText.trim() === "" && input.innerText.length === 0) {
                     caret.style.left = "50%";
                     caret.style.transform = "translateX(-50%)";
@@ -178,43 +206,42 @@
                     caret.style.left = (rect.left - wrapperRect.left) + 'px';
                     caret.style.transform = "none";
                 }
-                
                 caret.style.top = (rect.top - wrapperRect.top) + 'px';
                 caret.style.height = rect.height + 'px';
             }
-
-            // Remove the probe so it doesn't mess up the actual text
             dummy.parentNode.removeChild(dummy);
         }
 
-        // Limit to 2 lines
-        input.addEventListener('keydown', (e) => {
-            if (e.key === "Enter") {
-                const lines = input.innerText.split('\n');
-                if (lines.length >= 2) {
-                    e.preventDefault();
-                }
-            }
-        });
-
-        // Event listeners
         ['input', 'click', 'keyup', 'keydown', 'focus'].forEach(event => {
             input.addEventListener(event, () => {
-                // Tiny delay to allow the browser to update the selection
-                setTimeout(updateCaret, 0);
+                setTimeout(() => {
+                    updateCaret();
+                    updateUI();
+                }, 0);
             });
         });
 
-        // Force focus
-        window.onload = () => {
-            input.focus();
-            updateCaret();
-        };
+        window.addEventListener('afterprint', () => {
+            isPrintMode = true; 
+            instructions.classList.add('hidden');
+            enterNameLabel.classList.add('hidden');
+            successMsg.style.display = 'block';
+
+            setTimeout(() => {
+                isPrintMode = false;
+                input.innerText = ""; 
+                successMsg.style.display = 'none';
+                updateUI();
+                updateCaret();
+                input.focus();
+            }, 8000);
+        });
+
+        window.onload = () => { input.focus(); updateCaret(); };
 
         document.addEventListener('click', (e) => {
-            if (e.target !== input) {
+            if (e.target !== input && e.target.id !== 'print-btn') {
                 input.focus();
-                // Move cursor to end
                 const range = document.createRange();
                 const sel = window.getSelection();
                 range.selectNodeContents(input);
@@ -222,10 +249,6 @@
                 sel.removeAllRanges();
                 sel.addRange(range);
             }
-        });
-
-        input.addEventListener('blur', () => {
-            setTimeout(() => input.focus(), 0);
         });
     </script>
 </body>
